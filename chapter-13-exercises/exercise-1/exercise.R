@@ -6,30 +6,29 @@
 
 # Create a connection to the `Chinook_Sqlite.sqlite` file in the `data` folder
 # Be sure to set your working directory!
-
+db_connection <- dbConnect(SQLite(), dbname = "data/Chinook_Sqlite.sqlite")
 
 # Use the `dbListTables()` function (passing in the connection) to get a list
 # of tables in the database.
-
-
+dbListTables(db_connection)
 # Use the `tbl()`function to create a reference to the table of music genres.
 # Print out the the table to confirm that you've accessed it.
-
+genres <- tbl(db_connection, "Genre")
 
 # Try to use `View()` to see the contents of the table. What happened?
-
+View(genres)
 
 # Use the `collect()` function to actually load the genre table into memory
 # as a data frame. View that data frame.
-
-
+genres <- collect(genres)
+View(genres)
 # Use dplyr's `count()` function to see how many rows are in the genre table
-
-
+count(genres)
+?count()
 
 # Use the `tbl()` function to create a reference the table with track data.
 # Print out the the table to confirm that you've accessed it.
-
+tbl(db_connection, "Track")
 
 # Use dplyr functions to query for a list of artists in descending order by
 # popularity in the database (e.g., the artist with the most tracks at the top)
@@ -37,6 +36,13 @@
 #   group rows by the artist and count them. Finally, arrange the results.
 # - Use pipes to do this all as one statement without collecting the data into
 #   memory!
+track <- collect(tbl(db_connection, "Track"))
+
+track <- track %>% 
+  filter(Composer != is.na(Composer)) %>%
+  group_by(Composer) %>%
+  count(Composer) %>%
+  arrange(-n)
 
 
 # Use dplyr functions to query for the most popular _genre_ in the library.
@@ -44,8 +50,14 @@
 # two tables together in order to also access the genre name.
 # Collect the resulting data into memory in order to access the specific row of
 # interest
+track <- collect(tbl(db_connection, "Track"))
 
-
+track <- track %>%
+  filter(Composer != is.na(Composer)) %>%
+  group_by(GenreId) %>%
+  count(GenreId) %>%
+  arrange(-n) %>%
+  left_join(genres, by = "GenreId")
 # Bonus: Query for a list of the most popular artist for each genre in the
 # library (a "representative" artist for each).
 # Consider using multiple grouping operations. Note that you can only filter
